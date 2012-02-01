@@ -1,0 +1,197 @@
+LWPR library  
+(C) 2007 Stefan Klanke and Sethu Vijayakumar
+sethu.vijayakumar@ed.ac.uk
+
+The library is freely available under the terms of the LGPL 
+with an exception that allows for static linking, see the
+file COPYING.
+
+
+===========================================
+ Matlab-only  or Octave-only  usage
+===========================================
+
+If you only want to use LWPR from Matlab or Octave, including 
+the fast MEX files, you do not need to build and install the 
+library. Just unzip the archive in a convenient location, and
+add the "matlab" subdirectory to your Matlab or Octave path.
+Then, call 
+
+  lwpr_buildmex     (within Matlab/Octave) 
+  
+which will build the MEX files, yielding a dramatic performance 
+gain. lwpr_buildmex will NOT compile a stand-alone library,
+but rather statically link in the required C-code into each
+MEX file.
+
+
+There is still one little detail: By default, the LWPR 
+MEX-files will not support reading models from XML files.
+If you really require this feature, you need to edit
+"include/lwpr_config.h"  and change 
+#define HAVE_LIBEXPAT  0
+to
+#define HAVE_LIBEXPAT  1
+But then, you will have to make sure that the MEX compiler
+finds the EXPAT library.
+
+Note that LWPR models can be saved as Matlab structures
+alongside the rest of your workspace, so XML support is
+really optional for Matlab/Octave-only usage.
+
+
+===========================================
+ Installation on Linux / UNIX  ( MacOS X )
+===========================================
+
+The easiest way to set up the LWPR library on a UNIX-like system
+is to use the standard autotools build commands
+
+./configure
+make
+[make check]    
+make install
+
+The configure script will check if the EXPAT library is installed
+on your system, and automatically enable/disable support for reading
+LWPR models from XML files. If you don't have root access on your
+machine/network, you need to set a different target directory for
+the generated libraries from the default /usr/local/...
+For example, if only you would like to use the library, you could
+
+./configure --prefix=$HOME
+
+and a later "make install" will copy the LPWR header files into
+"$HOME/include" and the libraries into "$HOME/lib".
+
+There are three more options which you should consider giving to
+the configure script:
+
+--enable-threads=2 
+
+will enable multi-threading support (using pthreads), where the
+number you pass to the configure script equals the desired number
+of threads (should not exceed the number of processors/cores
+of your machine). Please note that the actual performance gain
+depends on the size of the model, but also on hardware-related
+things like the speed of memory access vs. the speed of your CPU.
+The default is to disable multi-threading.
+
+--with-matlab=/usr/local/matlab    and      (examples!!!)
+--with-octave=/opt/octave
+
+will enable building MEX files for Matlab or recent versions
+of Octave (2.9.12 and later should work). Of course, you need
+to modify the above examples to point to the exact locations of
+those packages on your machine. Calling "make" will then build
+specialised versions of the LWPR library (liblwprmex.so and
+liblwproctave.so) that use the memory allocation calls of the
+respective software environment. 
+
+Please note: The MEX files themselves (with suffix .mexglx for 
+Matlab on Linux, and .mex for Octave) will only be built 
+during "make install"  -- the reason for this non-standard
+behaviour is that the MEX files now depend on the aforementioned
+special libraries, and Matlab/Octave need to be able to find
+those. Therefore, make sure that your environment variable
+LD_LIBRARY_PATH includes the location that you set up with
+"--prefix", e.g.,  
+    export LD_LIBRARY_PATH=$HOME/lib
+for the example above.
+
+Please also note: The built MEX files will not be "installed"
+in any special location, but only be copied to the "matlab"
+subdirectory, so they reside along the corresponding m-files.
+
+You still need to set the MATLAB/Octave path to that directory
+(or copy the contents to some place you like).
+
+A final note: "make check" will probably fail if you extract 
+the tar-archive in a directory containing spaces, even though
+the package compiles correctly. The same holds true for 
+"example_c/cross" and "example_cpp/cross" which are auto-generated
+wrapper scripts for the binary executables ("example_c/.libs/cross").
+
+===========================================
+ Installation on Windows using Visual C
+===========================================
+
+The LWPR archive contains a subdirectory "VisualC", which 
+provides Visual Studio "solutions" and project files for
+building LWPR as a static or dynamic library, and for 
+building the examples in C and C++ (only tested on the
+Visual Studio Express 2008).
+
+There is also a batch script for building MEX files 
+(which use a common dynamic library), but you probably
+need to tweak it a little:  Open the file using a 
+text editor and check the lines that contain information
+about where Matlab is installed. Then, open a
+"Visual Studio" command-line, and run the batch file
+from there.
+
+Please also note: The built MEX files will just be
+copied to the "matlab" subdirectory, so they reside 
+along the corresponding m-files. You still need to 
+set the MATLAB path to that directory (or copy the 
+contents to some place you like).
+
+
+===========================================
+ Installation on Windows using MinGW
+===========================================
+
+The subdirectory "MingW" contains a simple Makefile
+with several targets.
+
+make static       builds LWPR as a static library 
+                   (-> liblwpr.a)
+                   
+make dynamic      builds LWPR as a DLL plus import libray 
+                   (-> liblwpr.dll and liblwpr.a)
+                   
+make example_c    builds the C example, using either library
+                   (-> cross.exe)
+                   
+make example_cpp  builds the C++ example, using either library
+                   (-> cross++.exe)
+                   
+Currently, there is no installation facility whatsoever, so
+for further usage you might want to copy the LWPR header files 
+and the generated libraries to convenient locations.
+
+
+===========================================
+ Installation of the Python module
+===========================================
+
+AFTER you have built the LWPR C library, change into the
+"python" subdirectory and call
+
+python setup.py build      and
+python setup.py install
+
+As an alternative, if you do not want to install the C library,
+you can statically compile all the C code into the Python
+extension (also an easy option for Windows users). For this
+use
+
+python setup_nolib.py build      and
+python setup_nolib.py install
+
+Both variants require Python's distutils to be installed on your
+machine. Please check distutils documentation for options 
+that control target directory etc. 
+
+If you do not have distutils installed on your machine,
+you can also try to use the Makefile within the "python"
+subdirectory. You probably need to tweak the first lines
+of that file, that is, set the correct Python location
+etc.
+
+Please note that you also need to have the Python extension
+"numpy" installed. This is a package for handling 
+multi-dimensional arrays and matrices, and comes as part
+of "scipy" (http://www.scipy.org).
+
+

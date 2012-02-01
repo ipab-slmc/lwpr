@@ -1,0 +1,609 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{calc}
+\usepackage[margin=2.5cm]{geometry}
+\newcommand{\dataset}{{\cal D}}
+\newcommand{\mbf}{\mathbf}
+\newcommand{\fracpartial}[2]{\frac{\partial #1}{\partial  #2}}
+\newcommand{\Cpp}{C\raisebox{2pt}{\tiny ++}}
+
+\newcommand{\var}[1]{{\tt #1}}
+
+\newenvironment{element}[2]%
+{{\large\sf #1}~~~(#2)\begin{list}{}%
+{\setlength{\leftmargin}{0.5cm}\setlength{\topsep}{0.2cm}}%
+\item[]%
+}
+{\end{list}}
+
+\newcommand{\Xmark}[1]{\hspace*{-1.5cm}\parbox{1.5cm}{\emph{#1}}}
+\newcommand{\tune}{\hspace*{-1.5cm}\parbox{1.5cm}{\emph{Tune\,!}}}
+
+\begin{document}
+
+\title{A Library for Locally Weighted Projection Regression\\
+--- Supplementary Documentation ---}
+
+\author{Stefan Klanke and Sethu Vijayakumar}
+
+\parindent=0cm
+
+\maketitle
+
+\tableofcontents
+
+\section{Introduction}
+
+Locally weighted projection regression (LWPR) is an algorithm that 
+achieves nonlinear function approximation in high dimensional spaces 
+even in the presence of redundant and irrelevant input dimensions
+\cite{Vijayakumar2005}. 
+At its core, it uses locally linear models
+\begin{equation}
+\label{eqPLS}
+\psi_k(\mbf x)=\beta_0 + \sum_{i=1}^R \beta_i s_i
+\end{equation}
+spanned by a small number of univariate regressions in selected directions 
+in input space, and it employs weighted partial least squares (PLS)
+to detect those directions and the corresponding slopes $\beta_i$.
+This nonparametric local learning system learns rapidly 
+with second order learning methods based on incremental training.
+LWPR uses statistically sound stochastic cross validation for 
+automatically updating the distance metrics of each local model (the 
+size of its ``receptive field''). In particular, it minimises
+\begin{equation}
+\label{eqDistObj}
+J = \frac{1}{\sum_{i=1}^M w_i} 
+\sum_{i=1}^M \frac{w_i(y_i - \hat y_i)^2}{(1 - w_i \mbf s_i^T \mbf P_s \mbf s_i)^2}
++ \frac{\gamma}{N} \sum_{i,j=1}^N D^2_{ij}
+\end{equation}
+by stochastic gradient descent. It is therefore necessary to provide 
+LWPR with a large enough number of training data, so that the algorithm
+can properly detect the local dimensionality (number $R$ of PLS
+projections) and the scale on which the regression function is 
+locally linear. If the training set is small, the samples need to
+be presented to LWPR multiple times in random order.
+
+\section{When to use LWPR (and when not)}
+
+LWPR is particularly suited for the following regression
+problems:
+\begin{itemize}
+\item The function to be learnt is \textbf{non-linear}. Otherwise
+      having multiple local models is a waste of resources, and
+      you should rather use ordinary linear regression, or 
+      partial least squares (PLS) for the case of 
+      high-dimensional or irrelevant inputs.
+      
+\item There are \textbf{large amounts of training data}. If you
+      desire good generalization from only relatively few
+      samples (say, less than 2000), you are probably better off
+      with Gaussian Processes (GP).
+      
+\item Your application requires \textbf{incremental, online} training.
+      If you can afford to collect the data beforehand, and the time
+      required for batch learning is not critical, LWPR loses its
+      edge against SVM regression, or (Sparse) GP regression. When
+      compared to global function approximators like multi-layer 
+      neural networks, LWPR has the tremendous advantage that its 
+      local models learn \emph{independently} and without interference.
+      
+\item The input space is \textbf{high-dimensional}, but the data 
+      lies on low-dimensional manifolds. LWPR places local models
+      only where they are needed, and can detect the local 
+      dimensionality through PLS, yielding robust estimates of
+      the regression coefficients. The latter feature sets off LWPR
+      against previous (but otherwise similar) algorithms as 
+      Receptive Field Weighted Regression.
+      
+\item The model may require \textbf{adaptation}, since the target
+      mapping may \textbf{change over time}. This suits LWPR very
+      well because a built-in forgetting factor can be tuned to
+      match the expected time scale at which such changes occur.
+      The adaptation then usually happens quite fast, since the
+      overall placement of receptive fields, their size, and 
+      the local PLS directions of a well-trained model can
+      often be kept, while the regression parameters $\beta$
+      get re-adjusted.
+          
+\end{itemize}
+
+\section{How to use LWPR}
+
+Despite all the nice properties and the efficiency of LWPR,
+applying the algorithm to a complex learning task -- in a way that a
+good learning performance is achieved -- can be quite involved.
+While we put a lot of effort into selecting reasonable defaults
+for all the learning parameters, there are still some parameters
+that need to be tuned to the task at hand. Probably the most
+important parameter is {\sf init\_D}, the distance metric assigned
+initially to newly created local models, which is also tightly 
+connected to the normalisation of the input data ({\sf norm\_in}).
+For tuning this parameter, you should consider the following 
+\emph{rule of thumb}:
+\begin{itemize}
+\item Collect a batch set of training data. This does not need to
+      cover the complete range of data you expect, but it should
+      be a ``typical'' subset. Split this into a training and a 
+      test set.
+
+\item Set the input normalization ({\sf norm\_in}) to the expected 
+      range of the input data -- do \emph{not} ``blindly'' normalize
+      by the standard deviation in each direction of the input space.
+      
+\item Fit an LWPR model to the training set, starting with \emph{fixed}
+      distance metrics ({\sf update\_D=0}) and rather wide (spherical) 
+      distance metrics, that is, set {\sf init\_D} to $r\mbf I$, where
+      $r$ is small (e.g., 0.05).
+      
+\item Check the prediction performance on the test set, and retrain the
+      model with an increased $r$ (yielding smaller receptive fields) 
+      until you get a satisfying performance.
+      
+\item Once you have a good {\sf init\_D}, enable distance metric adaptation
+      (set {\sf updata\_D=1}). Optionally, tune the learning rate
+      {\sf init\_alpha}. For this please see the description of that
+      parameter on page \pageref{parInitAlpha}.
+      
+\item Hint: If you know that the target function is linear in a certain subset
+      of the inputs\footnote{this is often the case for learning forward
+      dynamics of torque-controlled robot arms}, you can try keeping
+      the corresponding diagonal elements of {\sf init\_D} at very
+      small values.
+      
+\end{itemize}
+
+\section{Top-level elements of the LWPR model}
+\subsection{Basic elements}
+
+\begin{element}{nIn}{integer}
+Number of input dimensions. Must be specified when creating a new model.
+\end{element}
+
+\begin{element}{nOut}{integer}
+Number of output dimensions. Must be specified when creating a new model.
+\end{element}
+
+\begin{element}{name}{string}
+Optional description string.
+\end{element}
+
+\tune\begin{element}{norm\_in}{double vector, $N$}
+Component-wise
+input normalization factors useful for making the inputs
+dimensionless. In general, it is dangerous to divide each
+dimension by its variance without considering the physical
+properties of the input values since some input dimensions
+may be actually moving very little relative to its range. 
+Ideally, one should know the range of possible inputs in each
+dimension and try to normalize each input by that. Note also
+that distances between receptive fields and input data are
+calculated \emph{after} the normalization, that is, {\sf norm\_in}
+and {\sf init\_D} are closely connected tuning parameters.
+\end{element}
+
+\begin{element}{norm\_out}{double vector, $N_{out}$}
+Component-wise
+output normalization factors useful for making the outputs
+dimensionless. Since in the current implementation of LWPR
+all output dimensions are learned separately, tuning of this
+parameter has only little effect.
+\end{element}
+
+\begin{element}{kernel}{string or enum'ed constants, either 
+Gaussian (default) or BiSquare}
+This field determines which locality kernel should be used as
+the receptive fields' activation function. The Bisquare kernel
+might yield some gaim in computational efficiency, but as long
+as non-zero {\sf cutoff} values are use the difference should
+be negligible.
+\end{element}
+
+
+\subsection{Elements related to distance metrics}
+
+\begin{element}{diag\_only}{boolean flag, default = True}
+If this flag is True, the distance metric and all related 
+quantites (e.g., memory terms, learning rates, \dots) are 
+treated as diagonal matrices. This usually yields a big 
+speed-up especially in higher dimensions. However, using 
+diagonal distance metrics might not be sufficient for 
+complicated learning problems. As a general rule, try 
+learning with {\sf diag\_only=1} first.
+\end{element}
+
+\begin{element}{update\_D}{boolean flag, default = True}
+This flag determines whether the distances metrics of receptive
+fields are updated or kept fixed. The latter is faster, but
+learning performance depends completely on a suitable choice 
+of {\sf init\_D}. 
+\end{element}
+
+\tune\begin{element}{init\_alpha}{double matrix, $N\times N$}
+\label{parInitAlpha}
+Component-wise distance metric learning rate initialization 
+for gradient descent. If you see instability in convergence, 
+you have too large a learning rate. If the MSE is decreasing 
+but the convergence is slow, you might try increasing the 
+learning rate. In theory, using meta learning {\sf meta=1} 
+should alleviate the need to tune this parameter.
+\end{element}
+
+\begin{element}{meta}{boolean flag, default = False}
+If this flag is True, updates to the distances metrics use 
+second order adaptation of learning rates by the Incremental 
+Delta Bar Delta (IDBD) algorithm. This is slightly more 
+expensive, but usually results in a better (at least faster) 
+adaptation of the local models to the data.
+\end{element}
+
+\begin{element}{meta\_rate}{double}
+Second order learning rate, i.e. the rate that governs 
+the step size of changes to the distance metrics. Default 
+value = 250.0
+\end{element}
+
+\tune\begin{element}{penalty}{double}
+Multiplication factor $\gamma$ for the regularization penalty term 
+in the optimization functional (\ref{eqDistObj}). Larger values
+enforce smaller distance metrics, corresponding too wider receptive 
+fields, which in turn implies smoother functions.
+\end{element}
+
+\tune\begin{element}{init\_D}{double matrix, $N\times N$}
+Initial distance metric (must be symmetric positive definite) assigned
+to newly created receptive fields. The distance metric automatically
+adjusts itself if the distance metric learning is enabled 
+{\sf update\_D=1}. However, convergence properties and speed are
+strongly dependent on a good initialization. What can bad
+choices do:\begin{itemize}
+\item Too small value of {\sf D} (large receptive fields) can
+lead to local minima and delay convergence
+\item Too large value of {\sf D} (small receptive fields) can
+lead to allocation of too many receptive fields and overfitting
+\end{itemize}
+Theoretically, the learning mechanism takes care of thes problems,
+but there is nothing like a good initialization to make things
+easier for the algorithm! One way of guessing a good initialization
+is to guess the Hessian of the function being approximated and put
+a conservatively big initialization of receptive field based on
+the curvature.
+\end{element}
+
+\begin{element}{init\_M}{double matrix, $N\times N$}
+Cholesky factors of initial distance metric {\sf init\_D}. This is
+automatically calculated when you modify {\sf init\_D}. You should
+not tweak this field directly.
+\end{element}
+
+\subsection{Elements controlling the local regression}
+
+\begin{element}{w\_gen}{double, default = 0.1}
+Weight activation threshold. A new local model is generated if no 
+existing model elicits response (activation) greater than {\sf w\_gen}
+for a training sample.
+\end{element}
+
+\begin{element}{w\_prune}{double, default = 0.9}
+If a training sample elicits responses greater than {\sf w\_prune}
+from 2 local models, then the one with the smaller receptive field,
+that is, the one with the larger Frobenius norm of its distance 
+metric, is pruned.
+\end{element}
+
+\begin{element}{init\_S2}{double, default = $10^{-10}$}
+Initial value for the covariance computation of the data 
+(receptive field element {\sf SSs2}), useful to handle the
+case when no data has been seen so far.
+\end{element}
+
+\begin{element}{add\_threshold}{double, default = 0.5}
+The mean squared error of the current regression dimension is
+compared against the previous one. Only if the ratio of
+$\frac{nMSE[R]}{nMSE[R-1]}<$ {\sf add\_threshold}, a new regression
+direction is added. The criterion is used in conjunction with 
+some other checks to ensure that the decision is based on enough
+data support. See also Section \ref{secCheckPLS}.
+\end{element}
+
+\begin{element}{init\_lambda}{double, default = 0.999}
+Initial forgetting factor.
+\end{element}
+
+\begin{element}{final\_lambda}{double, default = 0.99999}
+Final forgetting factor.
+\end{element}
+
+\begin{element}{tau\_lambda}{double, default = 0.9999}
+Annealing constant for the forgetting factor.
+\end{element}
+
+\subsection{Read-only elements for inspection}
+
+\begin{element}{n\_data}{integer}
+Number of samples the LWPR model has been trained on so far.
+\end{element}
+
+\begin{element}{mean\_x}{double vector, $N\times N$}
+Mean of all input training data.
+\end{element}
+
+\begin{element}{var\_x}{double vector, $N\times N$}
+Variance of all input training data.
+\end{element}
+
+\section{Elements of a Receptive Field}
+
+The following elements are ordered alphabetically. You should not
+modify any of them by hand, but rather treat them as read-only variables
+for inspection purposes.\medskip
+
+\begin{element}{alpha}{double matrix, $N\times N$}
+Learning rates for
+updates to {\sf M}. When using meta learning, this field itself
+gets updated using Incremental Delta Bar Delta (IDBD). Initially it 
+is set to {\sf model.init\_alpha}.
+\end{element}
+
+\begin{element}{b}{double matrix, $N\times N$}
+Memory terms for 2nd 
+order updates to {\sf M}, as part of the IDBD algorithm.
+\end{element}
+
+\begin{element}{beta}{double vector, $R$}
+PLS regression coefficients
+as used in (\ref{eqPLS}). These get calculated from sufficient
+statistics {\sf SSYres}.
+\end{element}
+
+\begin{element}{beta\_0}{double}
+Intercept (or offset) of the local linear
+model, corresponding to $\beta_0$ in (\ref{eqPLS}). This parameter
+is simply estimated as the weighted mean of all output data the
+receptive fields is trained on.
+\end{element}
+
+\begin{element}{c}{double vector, $N$}
+Center of the receptive field.
+This vector is set to the current training input $\mbf x$ when
+a new receptive field is created. It is not modified afterwards
+(independence property of local learning).
+\end{element}
+
+\begin{element}{D}{double matrix, $N\times N$}
+Distance metric of the
+receptive field. Gets updated through its Cholesky decomposition
+{\sf M}. When a new receptive field is created, its distance metric
+is set either to the {\sf model.init\_D}, or the distance metric
+of the closest existing receptive field.
+\end{element}
+
+\begin{element}{H}{double vector, $R$}
+Sufficient statistics for distance metric updates.
+\end{element}
+
+\begin{element}{h}{double matrix, $N\times N$}
+Sufficient statistics for 2nd order distance metric updates,
+part of IDBD.
+\end{element}
+
+\begin{element}{lambda}{double vector, $R$}
+Forgetting factor for each PLS direction.
+\end{element}
+
+\begin{element}{M}{double matrix, $N\times N$}
+Cholesky decomposition of
+the distance metric {\sf D}. If {\sf model.update\_D} is non-zero,
+then this field gets updated by gradient descent, or -- if also meta 
+learning is active ({\sf model.meta}) -- by the Incremental Delta
+Bar Delta algorithm.
+\end{element}
+
+\begin{element}{mean\_x}{double vector, $N$}
+Weighted mean of the training data this RF has seen.
+\end{element}
+
+\begin{element}{n\_data}{double vector, $R$}
+Weighted number of training data each PLS direction has seen.
+\end{element}
+
+\begin{element}{P}{double matrix, $N\times R$}
+PLS projection axes ($R$ vectors of length $N$), gets 
+calculated from {\sf SSXres}.
+\end{element}
+
+\begin{element}{r}{double vector, $R$}
+Sufficient statistics for distance metric updates.
+\end{element}
+
+\begin{element}{s}{double vector, $R$}
+Current PLS loadings.
+\end{element}
+
+\begin{element}{SSp}{double}
+Sufficient statistics used for calculating confidence bounds.
+\end{element}
+
+\begin{element}{SSs2}{double vector, $R$}
+Accumulated statistics (covariance) of PLS factor loadings {\sf s}.
+\end{element}
+
+\begin{element}{SSXres}{double matrix, $N\times R$}
+Sufficient statistics for the PLS projection axes {\sf P}.
+\end{element}
+
+\begin{element}{SSYres}{double matrix, $N\times R$}
+Contains sufficient statistics for the PLS regression axes {\sf U}.
+\end{element}
+
+\begin{element}{sum\_e2}{double}
+This field holds the accumulated prediction error on the 
+training data, in its non-cross-validated form.
+\end{element}
+
+\begin{element}{sum\_e\_cv2}{double vector, $R$}
+Accumulated CV-error on training data.
+\end{element}
+
+\begin{element}{sum\_w}{double vector, $R$}
+Accumulated activation {\sf w} per PLS direction.
+\end{element}
+
+\begin{element}{SXresYres}{double matrix, $N\times R$}
+Contains sufficient statistics for the PLS regression axes {\sf U}.
+\end{element}
+
+\begin{element}{trustworthy}{boolean flag}
+This field reports whether a receptive field has ``seen'' enough 
+training data so that predictions from it can be trusted. In the 
+current implementation the correspong threshold for the weighted 
+number of data ({\sf n\_data}) is set to $2N$, where $N$ is the 
+input dimensionality.
+\end{element}
+
+\begin{element}{U}{double matrix, $N\times R$}
+PLS regression axes ($R$ vectors of length $N$), gets calculated 
+from {\sf SXresYres} by normalizing the columns to unit-length.
+\end{element}
+
+\begin{element}{var\_x}{double vector, $N$}
+Weighted variance of the training data this RF has seen.
+\end{element}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Heuristics and numerical safety measures}
+
+This section lists the strategies and heuristics employed to
+make the LWPR algorithm more robust against both ill-conditioned
+learnings tasks and numerical problems. The code snippets below 
+are taken from the Matlab implementation.
+
+\subsection{Initialisation of receptive fields}
+\begin{itemize}
+\item \var{SSs2} is set to the initial variance given by \var{init\_S2} ($=10^{-10}$ by default).
+\item \var{sum\_w} is set to $10^{-10}$.
+\item \var{n\_data} is set to $10^{-10}$.
+\end{itemize}
+
+\subsection{Check whether to add a new PLS projection}
+\label{secCheckPLS}
+\begin{verbatim}
+   mse_n_reg   = rf.sum_e_cv2(n_reg)  / rf.sum_w(n_reg) + 1.e-10;
+   mse_n_reg_1 = rf.sum_e_cv2(n_reg-1)/ rf.sum_w(n_reg-1) + 1.e-10;
+\end{verbatim}
+The above lines calculate a mean squared error (cross-validated)
+statistics for the two latest PLS projections. The error is weighted
+by the accumulated activations. A small value is added to prevent
+division by zero in the following \var{if}-clause:
+\begin{verbatim}
+   if (mse_n_reg/mse_n_reg_1 < model.add_threshold & ...
+      rf.n_data(n_reg)/rf.n_data(1) > 0.99 & ...
+      rf.n_data(n_reg)*(1-rf.lambda(n_reg)) > 0.5),
+\end{verbatim}
+$\Rightarrow$ A new PLS projection is added
+\begin{itemize}
+\item if the quotient
+of the error statistics is below a threshold, indicating that
+the latest PLS projection significantly contributes to the
+prediction accuracy, \emph{and} 
+\item if the latest PLS projection
+has already seen 99\% of the data the receptive field has seen
+\emph{and} 
+\item if the latest PLS projection has seen sufficient data, as
+determined by $n > \frac{0.5}{1-\var{\lambda}}$. 
+\end{itemize}
+
+\subsection{Adding a new PLS projection}
+\begin{itemize}
+\item \var{SSs2} is set to an initial variance of \var{init\_S2} ($=10^{-10}$ by default).
+\item \var{sum\_w} is set to $10^{-10}$.
+\item \var{n\_data} is set to $0$. This is in contrast to the initialisation
+of a new RF (see above), but still ok, since only the first element of \var{n\_data}
+is used in divisions.
+\end{itemize}
+
+\subsection{Updates to the regression parameters}
+\begin{itemize}
+\item Sufficient statistics for the PLS projections \var{U}, i.e. \var{SXresYres},
+get multiplied by $\var{lambda\_slow} = 1.0-(1.0-\var{lambda})/10$, but
+sufficient statistics for the residuals \var{SXres} and \var{SYres} are
+multiplied by the normal \var{lambda}.
+\item Sufficient statistics for confidence bounds (\var{SSp}) are
+updated with the squared activation $w^2$ instead of $w$. 
+\item Accumulated errors and CV-errors are only updated if
+``sufficient data'' has been seen:
+\begin{verbatim}
+if rf.n_data(1) > 0.1./(1.-rf.lambda(1))
+   rf.sum_e_cv2 = rf.sum_e_cv2.*rf.lambda + w*e_cv.^2;
+   rf.sum_e2    = rf.sum_e2*rf.lambda(end) + w*e^2;
+end
+\end{verbatim}
+Note that the condition is different from the check for a new PLS 
+projection. \var{sum\_e2} is only used for calculating a transient
+multiplier, which acts as an additional learning rate for distance
+metric updates.
+\end{itemize}
+
+\subsection{Distance metric updates}
+\begin{itemize}
+\item An update is only performed if the RF has seen sufficient data.
+The condition is the same as for the (CV-)error accumulation (see above).
+\item A \var{transient\_multiplier} gets computed by
+$\Big(\var{sum\_e2}/(\var{sum\_e\_cv2(end)}+10^{-10})\Big)^4$.
+This serves as an additional factor in the learning rate.
+\item In meta (second order) updates, the parameter \var{b} is clipped
+to $[-10;10]$, and updates to \var{b} are clipped to $[-0.1; 0.1]$.
+\item Updates to $\mbf M$, that is, elements of $\Delta\mbf M$, are
+compared against $0.1\textnormal{max}(\mbf M)$. If any element 
+$\Delta m_{ij}$ is larger, the learning rate $\alpha_{ij}$ is divided by 2,
+and \textbf{no} update is performed for this element.
+\item The memory term \var{r} gets updated with a term proportional
+to the squared activation $w^2$ instead of $w$. 
+\end{itemize}
+
+\subsection{Predictions}
+\begin{itemize}
+\item Depending on the parameter \var{cutoff}, only receptive fields with
+sufficient activation contribute to the prediction. This is mainly for
+speeding up predictions.
+\item Furthermore, only \var{trustworthy} receptive fields contribute, 
+that is, receptive fields having seen more than $2N$ training 
+samples.
+\end{itemize}
+
+\subsection{Updating receptive fields}
+\begin{itemize}
+\item Only receptive fields with sufficient activation, $w>0.001$ 
+are updated.
+\end{itemize}
+
+\subsection{Adding and pruning receptive fields}
+\begin{itemize}
+\item Creation of a new RF depends on the threshold parameter
+\var{w\_gen}. If the currently most active RF is \var{trustworthy}
+and has ``reasonable'' activation, it is used as a template.
+\begin{verbatim}
+if (wv(3) <= model.w_gen)
+   if (wv(3) > 0.1*model.w_gen & sub.rfs(iv(3)).trustworthy)
+      sub.rfs(numrfs+1) = lwpr_x_init_rf(model, sub.rfs(iv(3)), xn, yn);
+   else
+      sub.rfs(numrfs+1) = lwpr_x_init_rf(model, [], xn, yn);
+   end
+end
+\end{verbatim}
+\item If two receptive fields have activation $w>\var{w\_prune}$,
+one of them is removed. The selection criterion in this case is
+the width of the kernel, which in this implementation is measured
+by the trace (= sum of eigenvalues) of \var{D}.
+\end{itemize}
+
+\begin{thebibliography}{9}
+\bibitem{Vijayakumar2005}
+S.~Vijayakumar, A.~D'Souza, and S.~Schaal.
+\newblock Incremental online learning in high dimensions.
+\newblock \emph{Neural Computation}, 17:\penalty0 2602--2634, 2005.
+
+\end{thebibliography}
+
+\end{document}

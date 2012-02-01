@@ -1,0 +1,61 @@
+LWPR library  
+(C) 2007-2009 Stefan Klanke and Sethu Vijayakumar
+sethu.vijayakumar@ed.ac.uk
+
+
+Version 1.2.3
+---------------------------------------------------------
+* Corrected bugs in the Python module (missing Py_DECREF
+   in functions returning multiple numpy arrays that led
+   to a memory leak, as well as bad preprocessor directive
+   "USE_EXPAT" instead of "HAVE_LIBEXPAT")
+   Thanks to Benjamin Dittes
+
+* Corrected bad preprocessor directive (see above) in
+   C++ wrapper lwpr.hh. Also added casts between signed 
+   and unsigned integers in lwpr.hh and cross.cc
+   Thanks to Peter Pastor, Robert Nickl and Adrian Haith
+
+Version 1.2.2
+---------------------------------------------------------
+* Corrected bugs in the Python module (for accessing the
+   "n_pruned" and "num_rfs" members)
+   Thanks to Arjan Gijsberts
+* Fixed a missing matrix transpose in the visualisation
+   part of "test_lwpr_nD.m"
+
+Version 1.2.1
+---------------------------------------------------------
+* Fixed two missing #includes in C++ wrapper and example
+   that resulted in problems with GCC >= 4.3
+   Thanks to Dan Grollman
+
+Version 1.2
+---------------------------------------------------------
+* Added lwpr_predict_JcJ, which calculates predictions,
+   confidences, and the Jacobians for both
+
+Version 1.1
+---------------------------------------------------------
+* Added support for autotools
+   On Linux/Unix, use  configure, make, make install
+   to build and install shared and static libraries
+
+* Fixed bug in XML and binary I/O routines: 
+   flag update_D was not included
+
+* Fixed bug for reading XML files: 
+   SubModel counter was not properly increased
+
+* Added project files for Visual Studio 2008 
+   (only tested with Express version)
+
+* Added simple Makefile for MinGW compiler 
+
+* Introduced "BINIO version" information in binary files 
+   (breaks compatibility with V1.0)
+
+
+Version 1.0
+---------------------------------------------------------
+* First public release, initial submission to JMLR

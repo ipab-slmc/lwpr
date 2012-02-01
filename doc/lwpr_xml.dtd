@@ -1,0 +1,17 @@
+<!ELEMENT LWPR (integer|scalar|vector|matrix|SubModel)+>
+<!ATTLIST LWPR nIn CDATA #REQUIRED  
+               nOut CDATA #REQUIRED  
+               kernel CDATA #IMPLIED  
+               name CDATA #IMPLIED>   
+<!ELEMENT SubModel (integer|ReceptiveField)*>
+<!ATTLIST SubModel out_dim CDATA #REQUIRED numRFS CDATA #IMPLIED>
+<!ELEMENT ReceptiveField (integer|scalar|vector|matrix)*>
+<!ATTLIST ReceptiveField nReg CDATA #REQUIRED>
+<!ELEMENT integer (#PCDATA)>
+<!ATTLIST integer name CDATA #REQUIRED>
+<!ELEMENT scalar (#PCDATA)>
+<!ATTLIST scalar name CDATA #REQUIRED>   
+<!ELEMENT vector (#PCDATA)>
+<!ATTLIST vector  name CDATA #REQUIRED length CDATA #REQUIRED>      
+<!ELEMENT matrix (#PCDATA)>
+<!ATTLIST matrix  name CDATA #REQUIRED rows CDATA #REQUIRED columns CDATA #REQUIRED>     
