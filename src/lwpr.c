@@ -539,7 +539,7 @@ void lwpr_predict_JcJ(const LWPR_Model *model, const double *x, double cutoff, d
 #ifdef WIN32
          thread[i] = CreateThread(NULL,0, lwpr_aux_predict_one_JcJ_T ,&TD[i],0, &ID[i]);
 #else
-         rc[i] = pthread_create(&thread[i], NULL, lwpr_aux_predict_one_JcJ_T_T , &TD[i]);
+         rc[i] = pthread_create(&thread[i], NULL, lwpr_aux_predict_one_JcJ_T , &TD[i]);
 #endif         
       }     
        
