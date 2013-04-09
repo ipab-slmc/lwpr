@@ -42,9 +42,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs,const mxArray *prhs[]) {
    
    lwpr_aux_predict_conf_one_T(&TD);
    
-   plhs[0] = mxCreateScalarDouble(TD.yn);
-   if (nlhs>1) plhs[1] = mxCreateScalarDouble(TD.w_sec);
-   if (nlhs>2) plhs[2] = mxCreateScalarDouble(TD.w_max);
+   plhs[0] = mxCreateDoubleScalar(TD.yn);
+   if (nlhs>1) plhs[1] = mxCreateDoubleScalar(TD.w_sec);
+   if (nlhs>2) plhs[2] = mxCreateDoubleScalar(TD.w_max);
    lwpr_free_model(&model);
 }
 

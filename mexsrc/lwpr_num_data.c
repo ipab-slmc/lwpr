@@ -31,7 +31,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs,const mxArray *prhs[]) {
       pmodel = &model;
    }
    
-   plhs[0] = mxCreateScalarDouble(pmodel->n_data);
+   plhs[0] = mxCreateDoubleScalar(pmodel->n_data);
    
    if (pmodel == &model) lwpr_free_model(&model);
 }

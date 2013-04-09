@@ -48,8 +48,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs,const mxArray *prhs[]) {
    
    fill_matlab_from_sub(&model.sub[dim], plhs[0], 0);
    
-   plhs[1] = mxCreateScalarDouble(yp);
-   plhs[2] = mxCreateScalarDouble(max_w);
+   plhs[1] = mxCreateDoubleScalar(yp);
+   plhs[2] = mxCreateDoubleScalar(max_w);
    lwpr_free_model(&model);
 }
 

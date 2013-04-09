@@ -26,6 +26,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs,const mxArray *prhs[]) {
    have_expat = 1;
 #endif
 
-   plhs[0] = mxCreateScalarDouble(have_expat);
+   plhs[0] = mxCreateDoubleScalar(have_expat);
 }
 
