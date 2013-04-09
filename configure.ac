@@ -1,7 +1,9 @@
 AC_INIT([lwpr], [1.2.4], [sethu.vijayakumar@ed.ac.uk])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([include/lwpr_config.h])
+AM_PROG_AR
 LT_INIT
+
 
 AC_PROG_CC
 CFLAGS=-O3 -g

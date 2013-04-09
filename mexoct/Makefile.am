@@ -8,7 +8,7 @@ liblwproctave_la_SOURCES = $(top_srcdir)/src/lwpr.c \
                      $(top_srcdir)/src/lwpr_xml.c \
                      $(top_srcdir)/src/lwpr_matlab.c
              
-liblwproctave_la_CFLAGS = -I$(top_srcdir)/include -I$(OCTINCLUDEPATH)/octave -DMATLAB
+liblwproctave_la_CFLAGS = -I$(top_srcdir)/include -I$(OCTINCLUDEPATH) -DMATLAB
 liblwproctave_la_LDFLAGS = -version-info 1:1:0
 
 mexsources=lwpr_predict lwpr_predict_J lwpr_predict_JcJ lwpr_predict_JH lwpr_update lwpr_num_rfs lwpr_num_data lwpr_storage lwpr_write_xml lwpr_read_xml lwpr_write_binary lwpr_read_binary
