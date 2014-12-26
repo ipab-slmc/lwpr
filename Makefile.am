@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = src include example_c example_cpp tests @MEXSUB@ @OCTSUB@
-EXTRA_DIST = html Doxyfile README.TXT INSTALL.TXT
+EXTRA_DIST = Doxyfile README.TXT INSTALL.TXT
 TESTS = tests/crosscheck
 
 dist-hook:
