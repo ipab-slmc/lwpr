@@ -24,3 +24,4 @@ stamp-h1
 *.status
 Makefile
 libtool
+include/lwpr_config.h

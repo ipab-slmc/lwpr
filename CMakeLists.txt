@@ -25,6 +25,10 @@ include_directories(
 set(LWPR_VERSION_STRING 1.2.6)
 set(LWPR_SOVERSION_STRING 1)
 
+if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/include/lwpr_config.h)
+  message(FATAL_ERROR "'include/lwpr_config.h' exists in the source path. Have you tried to build LWPR using autotools? Please delete the file.")
+endif()
+
 CONFIGURE_FILE(include/lwpr_config.h.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/lwpr_config.h)
 
 if (${BUILD_SHARED_LIBS})
