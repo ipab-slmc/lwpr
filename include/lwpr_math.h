@@ -27,6 +27,8 @@ Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #ifndef __LWPR_MATH_H
 #define __LWPR_MATH_H
 
+#include <lwpr_config.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -38,7 +40,7 @@ extern "C" {
    \param[in] n   Length of the vector
    \return  The square norm \f[\|\mathbf{x}\|^2 = \sum_{i=1}^n x_i^2\f]
 */      
-double lwpr_math_norm2(const double *x, int n);
+LIBRARY_API double lwpr_math_norm2(const double *x, int n);
 
 /** \brief Computes the dot product between two vectors of doubles.
 
@@ -47,7 +49,7 @@ double lwpr_math_norm2(const double *x, int n);
    \param[in] n   Length of the vectors
    \return  The dot product \f[\mathbf{a}\cdot\mathbf{b} = \sum_{i=1}^n a_i b_i\f]
 */      
-double lwpr_math_dot_product(const double *a,const double *b,int n);
+LIBRARY_API double lwpr_math_dot_product(const double *a,const double *b,int n);
 
 
 /** \brief Multiplies a vector by a scalar and stores the result in another vector.
@@ -59,7 +61,7 @@ double lwpr_math_dot_product(const double *a,const double *b,int n);
 
    Computes \f[\mathbf{y} \leftarrow a\mathbf{x}\quad\Leftrightarrow\quad y_i \leftarrow a x_i \quad i=1\dots n\f]
 */    
-void lwpr_math_scalar_vector(double *y, double a,const double *x,int n);
+LIBRARY_API void lwpr_math_scalar_vector(double *y, double a,const double *x,int n);
 
 /** \brief Multiplies a vector by a scalar and adds the result to another vector.
   
@@ -70,7 +72,7 @@ void lwpr_math_scalar_vector(double *y, double a,const double *x,int n);
 
    Computes \f[\mathbf{y} \leftarrow \mathbf{y} + a\mathbf{x}\quad\Leftrightarrow\quad y_i \leftarrow y_i + a x_i \quad i=1\dots n\f]
 */    
-void lwpr_math_add_scalar_vector(double *y, double a,const double *x,int n);
+LIBRARY_API void lwpr_math_add_scalar_vector(double *y, double a,const double *x,int n);
 
 /** \brief Multiplies a vector by a scalar and adds the result to another vector, which
       is scaled before the addition.
@@ -83,7 +85,7 @@ void lwpr_math_add_scalar_vector(double *y, double a,const double *x,int n);
 
    Computes \f[\mathbf{y} \leftarrow b\mathbf{y} + a\mathbf{x}\quad\Leftrightarrow\quad y_i \leftarrow b y_i + a x_i \quad i=1\dots n\f]
 */    
-void lwpr_math_scale_add_scalar_vector(double b, double *y, double a,const double *x,int n);
+LIBRARY_API void lwpr_math_scale_add_scalar_vector(double b, double *y, double a,const double *x,int n);
 
 /** \brief Computes the Cholesky decomposition of a matrix.
 
@@ -104,7 +106,7 @@ void lwpr_math_scale_add_scalar_vector(double b, double *y, double a,const doubl
    \endcode
    if you can afford to overwrite the original contents of the matrix.
 */   
-int lwpr_math_cholesky(int N,int Ns,double *R,const double *A);
+LIBRARY_API int lwpr_math_cholesky(int N,int Ns,double *R,const double *A);
 
 #ifdef __cplusplus
 }

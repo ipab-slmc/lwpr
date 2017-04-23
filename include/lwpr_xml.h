@@ -33,6 +33,7 @@ Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #define __LWPR_XML_H
 
 #include <stdio.h>
+#include <lwpr_config.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -67,14 +68,14 @@ typedef struct {
       - 1 in case of success
    \ingroup LWPR_C          
 */
-int lwpr_write_xml(const LWPR_Model *model, const char *filename);
+LIBRARY_API int lwpr_write_xml(const LWPR_Model *model, const char *filename);
 
 /** \brief Writes an LWPR model to an XML file 
    \param[in] model    Pointer to a valid LWPR model structure
    \param[in] fp       Descriptor of an already opened file (see stdio.h)
    \ingroup LWPR_C    
 */
-void lwpr_write_xml_fp(const LWPR_Model *model,FILE *fp);
+LIBRARY_API void lwpr_write_xml_fp(const LWPR_Model *model,FILE *fp);
 
 /** \brief Parse an LWPR model from an XML file 
    
@@ -93,7 +94,7 @@ void lwpr_write_xml_fp(const LWPR_Model *model,FILE *fp);
    function is just a dummy and returns -2.
    \ingroup LWPR_C       
 */
-int lwpr_read_xml(LWPR_Model *model, const char *filename, int *numWarnings);
+LIBRARY_API int lwpr_read_xml(LWPR_Model *model, const char *filename, int *numWarnings);
 
 /** \brief Writes a matrix as an XML tag into a file
    \param[in] fp       File descriptor
@@ -104,7 +105,7 @@ int lwpr_read_xml(LWPR_Model *model, const char *filename, int *numWarnings);
    \param[in] N        Number of columns
    \param[in] val      Pointer to the elements of the matrix 
 */
-void lwpr_xml_write_matrix(FILE *fp, int level, const char *name, 
+LIBRARY_API void lwpr_xml_write_matrix(FILE *fp, int level, const char *name,
       int M, int Ms, int N, const double *val);
 
 /** \brief Writes a vector as an XML tag into a file
@@ -114,7 +115,7 @@ void lwpr_xml_write_matrix(FILE *fp, int level, const char *name,
    \param[in] N        Number of elements
    \param[in] val      Pointer to the elements of the matrix 
 */
-void lwpr_xml_write_vector(FILE *fp, int level, const char *name, 
+LIBRARY_API void lwpr_xml_write_vector(FILE *fp, int level, const char *name,
       int N, const double *val);
 
 /** \brief Writes an interger as an XML tag into a file
@@ -123,7 +124,7 @@ void lwpr_xml_write_vector(FILE *fp, int level, const char *name,
    \param[in] name     Name of the variable
    \param[in] val      Integer value
 */
-void lwpr_xml_write_int(FILE *fp, int level, const char *name, int val);
+LIBRARY_API void lwpr_xml_write_int(FILE *fp, int level, const char *name, int val);
 
 /** \brief Writes a scalar (double) as an XML tag into a file
    \param[in] fp       File descriptor
@@ -131,13 +132,13 @@ void lwpr_xml_write_int(FILE *fp, int level, const char *name, int val);
    \param[in] name     Name of the variable
    \param[in] val      Scalar value
 */
-void lwpr_xml_write_scalar(FILE *fp, int level, const char *name, double val);
+LIBRARY_API void lwpr_xml_write_scalar(FILE *fp, int level, const char *name, double val);
 
 /** \brief Writes a receptive field structure as XML tags into a file
    \param[in] fp     File descriptor
    \param[in] RF     Pointer to a receptive field structure
 */
-void lwpr_xml_write_rf(FILE *fp, const LWPR_ReceptiveField *RF);
+LIBRARY_API void lwpr_xml_write_rf(FILE *fp, const LWPR_ReceptiveField *RF);
 
 /** \brief Checks whether an XML tag describes a valid scalar (int or double)
    \param[in] atts         Array of XML attributes
@@ -146,7 +147,7 @@ void lwpr_xml_write_rf(FILE *fp, const LWPR_ReceptiveField *RF);
       - 1 in case of success
       - 0 in case of failure
 */
-int lwpr_xml_parse_scalar(const char **atts, const char **fieldName);
+LIBRARY_API int lwpr_xml_parse_scalar(const char **atts, const char **fieldName);
 
 /** \brief Checks whether an XML tag describes a valid vector
    \param[in] atts         Array of XML attributes
@@ -156,7 +157,7 @@ int lwpr_xml_parse_scalar(const char **atts, const char **fieldName);
       - 1 in case of success
       - 0 in case of failure
 */
-int lwpr_xml_parse_vector(const char **atts, const char **fieldName, int *N);
+LIBRARY_API int lwpr_xml_parse_vector(const char **atts, const char **fieldName, int *N);
 
 /** \brief Checks whether an XML tag describes a valid matrix
    \param[in] atts         Array of XML attributes
@@ -167,13 +168,13 @@ int lwpr_xml_parse_vector(const char **atts, const char **fieldName, int *N);
       - 1 in case of success
       - 0 in case of failure
 */
-int lwpr_xml_parse_matrix(const char **atts, const char **fieldName, int *M, int *N);
+LIBRARY_API int lwpr_xml_parse_matrix(const char **atts, const char **fieldName, int *M, int *N);
 
 /** \brief Auxiliary routine to report a parsing error 
    \param[in] ud  Pointer to parser data structure (including LWPR model etc.)
    \param[in] msg Error message
 */
-void lwpr_xml_error(LWPR_ParserData *ud, const char *msg);
+LIBRARY_API void lwpr_xml_error(LWPR_ParserData *ud, const char *msg);
 
 /** \brief Auxiliary routine to report a "bad dimensionality" parsing error 
    \param[in] ud  Pointer to parser data structure (including LWPR model etc.)
@@ -181,20 +182,20 @@ void lwpr_xml_error(LWPR_ParserData *ud, const char *msg);
    \param[in] wishM        Number of desired rows, or 1 in case of scalars / vectors
    \param[in] wishN        Number of desired columns, or elements in case of vectors
 */
-void lwpr_xml_dim_error(LWPR_ParserData *ud, const char *fieldname,int wishM,int wishN);
+LIBRARY_API void lwpr_xml_dim_error(LWPR_ParserData *ud, const char *fieldname,int wishM,int wishN);
 
 /** \brief Auxiliary routine to report an "unknown element" warning
    \param[in] ud  Pointer to parser data structure (including LWPR model etc.)
    \param[in] fieldname    Name of variable 
 */
-void lwpr_xml_report_unknown(LWPR_ParserData *ud, const char *fieldname);
+LIBRARY_API void lwpr_xml_report_unknown(LWPR_ParserData *ud, const char *fieldname);
 
 /** \brief Callback for EXPAT parser, start of a new element */
-void lwpr_xml_start_element(void *userData, const char *name, const char **atts);
+LIBRARY_API void lwpr_xml_start_element(void *userData, const char *name, const char **atts);
 /** \brief Callback for EXPAT parser, element finished */
-void lwpr_xml_end_element(void *userData, const char *name);
+LIBRARY_API void lwpr_xml_end_element(void *userData, const char *name);
 /** \brief Callback for EXPAT parser, for data between enclosing tags */
-void lwpr_xml_handle_data(void *userData, const char *s, int len);
+LIBRARY_API void lwpr_xml_handle_data(void *userData, const char *s, int len);
 
 /** \brief Reads a file into memory
    \param[in]  filename    Name of the XML file
@@ -204,7 +205,7 @@ void lwpr_xml_handle_data(void *userData, const char *s, int len);
    
    Note that the allocated memory has to be disposed using LWPR_FREE() afterwards.
 */      
-int lwpr_xml_read_file_into_buffer(const char *filename, char **buffer);
+LIBRARY_API int lwpr_xml_read_file_into_buffer(const char *filename, char **buffer);
 
 #ifdef __cplusplus
 }

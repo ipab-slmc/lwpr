@@ -247,7 +247,7 @@ typedef struct LWPR_Model {
    \param[out] max_w Maximum activation per output dimension. Must be NULL or point to an array of <em>nOut</em> doubles
    \ingroup LWPR_C   
 */      
-void lwpr_predict(const LWPR_Model *model, const double *x, 
+LIBRARY_API void lwpr_predict(const LWPR_Model *model, const double *x,
       double cutoff, double *y, double *conf, double *max_w);
 
 /** \brief Computes the prediction and its derivatives (Jacobian) of an LWPR model
@@ -277,7 +277,7 @@ is thus stored as
 
    \ingroup LWPR_C
 */      
-void lwpr_predict_J(const LWPR_Model *model, const double *x, 
+LIBRARY_API void lwpr_predict_J(const LWPR_Model *model, const double *x,
       double cutoff, double *y, double *J);
 
 
@@ -295,7 +295,7 @@ void lwpr_predict_J(const LWPR_Model *model, const double *x,
 
    \ingroup LWPR_C
 */      
-void lwpr_predict_JcJ(const LWPR_Model *model, const double *x, 
+LIBRARY_API void lwpr_predict_JcJ(const LWPR_Model *model, const double *x,
       double cutoff, double *y, double *J, double *conf, double *Jconf);         
       
 /** \brief Computes the prediction and its first and second derivatives 
@@ -313,7 +313,7 @@ void lwpr_predict_JcJ(const LWPR_Model *model, const double *x,
 
    \ingroup LWPR_C
 */      
-void lwpr_predict_JH(const LWPR_Model *model, const double *x, 
+LIBRARY_API void lwpr_predict_JH(const LWPR_Model *model, const double *x,
       double cutoff, double *y, double *J, double *H);      
 
 /** \brief Updates an LWPR model with a given input/output pair (x,y). Optionally
@@ -329,7 +329,7 @@ void lwpr_predict_JH(const LWPR_Model *model, const double *x,
       - 0 if a receptive field would have to be added, but the necessary memory could not be allocated.
    \ingroup LWPR_C                           
 */  
-int lwpr_update(LWPR_Model *model, const double *x, const double *y, 
+LIBRARY_API int lwpr_update(LWPR_Model *model, const double *x, const double *y,
       double *yp, double *max_w);
 
 /** \brief Initialises an LWPR model and allocates internally used storage for submodels etc.
@@ -346,7 +346,7 @@ int lwpr_update(LWPR_Model *model, const double *x, const double *y,
    \sa lwpr_free_model    
    \ingroup LWPR_C   
 */  
-int lwpr_init_model(LWPR_Model *model, int nIn, int nOut, const char *name);
+LIBRARY_API int lwpr_init_model(LWPR_Model *model, int nIn, int nOut, const char *name);
 
 /** \brief Cleans up the LWPR_Model structure by disposing all internally allocated memory.
       Make sure you always call this function if you do not need the model anymore.
@@ -377,7 +377,7 @@ int lwpr_init_model(LWPR_Model *model, int nIn, int nOut, const char *name);
    \sa lwpr_init_model       
    \ingroup LWPR_C   
 */
-void lwpr_free_model(LWPR_Model *model);
+LIBRARY_API void lwpr_free_model(LWPR_Model *model);
 
 /** \brief Set the initial learning rate for 2nd order distance metric updates 
    \param[in,out] model  Pointer to a valid LWPR_Model
@@ -387,7 +387,7 @@ void lwpr_free_model(LWPR_Model *model);
       - 1 in case of success
    \ingroup LWPR_C   
 */
-int lwpr_set_init_alpha(LWPR_Model *model, double alpha);
+LIBRARY_API int lwpr_set_init_alpha(LWPR_Model *model, double alpha);
 
 /** \brief Set a spherical initial distance metric for creating new receptive fields
    \param[in,out] model  Pointer to a valid LWPR_Model
@@ -397,7 +397,7 @@ int lwpr_set_init_alpha(LWPR_Model *model, double alpha);
       - 1 in case of success
    \ingroup LWPR_C   
 */
-int lwpr_set_init_D_spherical(LWPR_Model *model, double sigma);
+LIBRARY_API int lwpr_set_init_D_spherical(LWPR_Model *model, double sigma);
 
 /** \brief Set a diagonal initial distance metric for creating new receptive fields
    \param[in,out] model  Pointer to a valid LWPR_Model
@@ -408,7 +408,7 @@ int lwpr_set_init_D_spherical(LWPR_Model *model, double sigma);
       - 1 in case of success
    \ingroup LWPR_C   
 */
-int lwpr_set_init_D_diagonal(LWPR_Model *model, const double *d);
+LIBRARY_API int lwpr_set_init_D_diagonal(LWPR_Model *model, const double *d);
 
 /** \brief Set initial distance metric for creating new receptive fields
    \param[in,out] model  Pointer to a valid LWPR_Model
@@ -422,7 +422,7 @@ int lwpr_set_init_D_diagonal(LWPR_Model *model, const double *d);
       - 1 in case of success
    \ingroup LWPR_C   
 */
-int lwpr_set_init_D(LWPR_Model *model, const double *D, int stride);
+LIBRARY_API int lwpr_set_init_D(LWPR_Model *model, const double *D, int stride);
 
 /** \brief Creates a duplicate (deep copy) of an LWPR model structure
    \param[out] dest  Pointer to an (uninitialised) LWPR_Model
@@ -434,7 +434,7 @@ int lwpr_set_init_D(LWPR_Model *model, const double *D, int stride);
       
    \ingroup LWPR_C   
 */   
-int lwpr_duplicate_model(LWPR_Model *dest, const LWPR_Model *src);
+LIBRARY_API int lwpr_duplicate_model(LWPR_Model *dest, const LWPR_Model *src);
 
 #ifdef __cplusplus
 }
