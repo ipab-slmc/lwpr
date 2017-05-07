@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.5)
+cmake_minimum_required(VERSION 3.3.0)
 project(lwpr)
 
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
@@ -10,6 +10,7 @@ set(NUM_THREADS 1 CACHE STRING "Number of execution threads")
 set(LWPR_AUTHOR sethu.vijayakumar@ed.ac.uk)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
 find_package(Threads REQUIRED)
 if (${USE_EXPAT})
   find_package(EXPAT)
@@ -17,6 +18,8 @@ if (${USE_EXPAT})
 endif()
 
 find_package(Eigen3)
+find_package(Matlab COMPONENTS MX_LIBRARY MEX_COMPILER)
+
 add_definitions(-DHAVE_CONFIG_H)
 
 include_directories(
@@ -65,6 +68,34 @@ if (${BUILD_EXAMPLES})
   endif()
 endif()
 
+if (${MATLAB_FOUND})
+
+    set(MATLAB_NATIVE matlab/lwpr_init.m matlab/lwpr_num_data.m matlab/lwpr_num_rfs.m matlab/lwpr_pls_stats.m matlab/lwpr_predict.m matlab/lwpr_predict_J.m matlab/lwpr_predict_JcJ.m matlab/lwpr_predict_JH.m matlab/lwpr_read_binary.m matlab/lwpr_read_xml.m matlab/lwpr_set.m matlab/lwpr_storage.m matlab/lwpr_update.m matlab/lwpr_write_binary.m matlab/lwpr_write_xml.m matlab/lwpr_x_check_add_projection.m matlab/lwpr_x_compute_projection.m matlab/lwpr_x_compute_projection_d.m matlab/lwpr_x_compute_projection_r.m matlab/lwpr_x_dist_derivatives.m matlab/lwpr_x_init_rf.m matlab/lwpr_x_kernel.m matlab/lwpr_x_predict_one.m matlab/lwpr_x_predict_one_gH.m matlab/lwpr_x_predict_one_J.m matlab/lwpr_x_predict_one_JcJ.m matlab/lwpr_x_update_distance_metric.m matlab/lwpr_x_update_means.m matlab/lwpr_x_update_one.m matlab/lwpr_x_update_regression.m matlab/test_lwpr_1D.m matlab/test_lwpr_2D.m matlab/test_lwpr_nD.m)
+
+	set(MATLAB_SOURCES lwpr_x_dist_derivatives;lwpr_x_check_add_projection;lwpr_x_compute_projection;lwpr_x_compute_projection_r;lwpr_x_compute_projection_d;lwpr_x_update_distance_metric;lwpr_x_update_means;lwpr_x_update_regression;lwpr_x_init_rf;lwpr_x_update_one;lwpr_x_predict_one;lwpr_num_data;lwpr_num_rfs;lwpr_predict;lwpr_predict_J;lwpr_predict_JcJ;lwpr_predict_JH;lwpr_update;lwpr_storage;lwpr_write_binary;lwpr_read_binary)
+
+	set(MEX_DEFINES MATLAB)
+    if("${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
+    	set(MEX_DEFINES ${MEX_DEFINES} MX_COMPAT_32)
+    endif()
+
+	FOREACH(MEXFN ${MATLAB_SOURCES})  
+	    matlab_add_mex(NAME ${MEXFN} SRC mexsrc/${MEXFN}.c src/lwpr_matlab.c ${LWPR_SOURCES} LINK_TO ${CMAKE_THREAD_LIBS_INIT} -lm)
+	    target_compile_definitions(${MEXFN} PUBLIC ${MEX_DEFINES})
+	ENDFOREACH()
+
+	if (${EXPAT_FOUND})
+	    matlab_add_mex(NAME lwpr_write_xml SRC mexsrc/lwpr_write_xml.c src/lwpr_matlab.c ${LWPR_SOURCES} LINK_TO ${CMAKE_THREAD_LIBS_INIT} -lm ${EXPAT_LIBRARIES})
+	    matlab_add_mex(NAME lwpr_read_xml SRC mexsrc/lwpr_read_xml.c src/lwpr_matlab.c ${LWPR_SOURCES} LINK_TO ${CMAKE_THREAD_LIBS_INIT} -lm ${EXPAT_LIBRARIES})
+	    target_compile_definitions(lwpr_write_xml PUBLIC ${MEX_DEFINES})
+	    target_compile_definitions(lwpr_read_xml PUBLIC ${MEX_DEFINES})
+	else()
+	    matlab_add_mex(NAME lwpr_write_xml SRC mexsrc/lwpr_write_xml.c src/lwpr_matlab.c ${LWPR_SOURCES} LINK_TO ${CMAKE_THREAD_LIBS_INIT} -lm)
+	    target_compile_definitions(lwpr_write_xml PUBLIC ${MEX_DEFINES})
+	endif()
+
+endif()
+
 if (${BUILD_SHARED_LIBS})
 	install(TARGETS lwpr
 	    DESTINATION lib
@@ -84,4 +115,14 @@ if (${BUILD_EXAMPLES})
     if (${EIGEN3_FOUND})
     	install(TARGETS example_eigen_cpp RUNTIME DESTINATION bin)
     endif()
+endif()
+
+if (${MATLAB_FOUND})
+	FOREACH(MEXFN ${MATLAB_SOURCES})  
+	    	install(TARGETS ${MEXFN}
+	    DESTINATION share/Matlab
+	    LIBRARY DESTINATION share/Matlab
+	    ARCHIVE DESTINATION share/Matlab)
+	ENDFOREACH()
+	install(FILES ${MATLAB_NATIVE} DESTINATION share/Matlab)
 endif()
