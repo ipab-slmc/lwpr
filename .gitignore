@@ -25,3 +25,5 @@ stamp-h1
 Makefile
 libtool
 include/lwpr_config.h
+*.obj
+*.mexw64

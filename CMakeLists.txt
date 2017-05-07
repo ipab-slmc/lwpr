@@ -64,3 +64,24 @@ if (${BUILD_EXAMPLES})
     target_link_libraries(example_eigen_cpp lwpr)
   endif()
 endif()
+
+if (${BUILD_SHARED_LIBS})
+	install(TARGETS lwpr
+	    DESTINATION lib
+	    LIBRARY DESTINATION lib
+	    ARCHIVE DESTINATION lib)
+endif()
+
+if (${BUILD_STATIC_LIBS})
+	install(TARGETS lwpr_static
+	    DESTINATION lib
+	    LIBRARY DESTINATION lib
+	    ARCHIVE DESTINATION lib)
+endif()
+
+if (${BUILD_EXAMPLES})
+	install(TARGETS example_c example_cpp RUNTIME DESTINATION bin)
+    if (${EIGEN3_FOUND})
+    	install(TARGETS example_eigen_cpp RUNTIME DESTINATION bin)
+    endif()
+endif()

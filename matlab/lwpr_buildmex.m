@@ -35,8 +35,8 @@ cd(basedir);
 
 fprintf(1,'Checking for EXPAT dependency ... ');
 
-mex -DMATLAB -I../include ../mexsrc/lwpr_has_expat.c
-use_expat = lwpr_has_expat;
+%mex -DMATLAB -I../include ../mexsrc/lwpr_has_expat.c
+%use_expat = lwpr_has_expat;
 if use_expat
    fprintf(1,'yes\n');
 else
