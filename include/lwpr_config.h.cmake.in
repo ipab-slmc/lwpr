@@ -28,6 +28,8 @@
 /* Version number of package */
 #define VERSION "@LWPR_VERSION_STRING@"
 
+#cmakedefine EIGEN3_FOUND 1
+
 #ifdef _WIN32
 #    ifdef LIBRARY_EXPORTS
 #        define LIBRARY_API __declspec(dllexport)

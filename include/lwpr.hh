@@ -35,11 +35,37 @@ Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include <string.h>
 #include <vector>
 
+#ifdef EIGEN3_FOUND
+  #include <Eigen/Dense>
+#endif
+
 /** \brief doubleVec Shortcut typedef for the vector object utilised in the C++
    implementation of LWPR 
    \ingroup LWPR_CPP   
 */
 typedef std::vector<double> doubleVec;
+
+#ifdef EIGEN3_FOUND
+Eigen::VectorXd doubleVecToEigen(const doubleVec& ret) {
+      return Eigen::Map<Eigen::VectorXd>(const_cast<double*>(ret.data()),ret.size());
+   }
+
+Eigen::MatrixXd doubleVecToEigen(const std::vector<doubleVec>& tmp) {
+      Eigen::MatrixXd ret(tmp.size(), tmp[0].size());
+      for(int i=0;i<tmp.size();i++) ret.row(i) = Eigen::Map<Eigen::VectorXd>(const_cast<double*>(tmp[i].data()),tmp[i].size());
+      return ret;
+   }
+
+std::vector<Eigen::VectorXd> doubleVecToEigenVec(const std::vector<doubleVec>& tmp) {
+	std::vector<Eigen::VectorXd> ret(tmp.size());
+	for (int i = 0; i<tmp.size(); i++) ret[i] = Eigen::Map<Eigen::VectorXd>(const_cast<double*>(tmp[i].data()), tmp[i].size());
+	return ret;
+}
+
+doubleVec EigenTodoubleVec(const Eigen::Ref<const Eigen::VectorXd> ret) {
+      return doubleVec(ret.data(),ret.data()+ret.rows());
+   }
+#endif
 
 /** \brief Simple class for describing exceptions that may be
    thrown during calls to LWPR methods 
@@ -231,6 +257,45 @@ class LWPR_ReceptiveFieldObject {
       }
       return s;
    }
+
+#ifdef EIGEN3_FOUND
+   Eigen::VectorXd meanX_eig() const {
+      return doubleVecToEigen(meanX());
+   }
+
+   Eigen::VectorXd varX_eig() const {
+	   return doubleVecToEigen(varX());
+   }
+
+   Eigen::VectorXd center_eig() const {
+	   return doubleVecToEigen(center());
+   }
+
+   Eigen::VectorXd beta_eig() const {
+	   return doubleVecToEigen(beta());
+   }
+
+   Eigen::VectorXd numData_eig() const {
+	   return doubleVecToEigen(numData());
+   }
+
+   Eigen::VectorXd slope_eig() const {
+	   return doubleVecToEigen(slope());
+   }
+
+   Eigen::MatrixXd D_eig() const {
+	   return doubleVecToEigen(D());
+   }
+   std::vector<Eigen::VectorXd> M_eig() const {
+	   return doubleVecToEigenVec(M());
+   }
+   Eigen::MatrixXd U_eig() const {
+	   return doubleVecToEigen(U());
+   }
+   Eigen::MatrixXd P_eig() const {
+	   return doubleVecToEigen(P());
+   }
+#endif
    
    private:
 
@@ -644,6 +709,59 @@ class LWPR_Object {
       }
       return LWPR_ReceptiveFieldObject(model.sub[outDim].rf[index]);
    }
+
+#ifdef EIGEN3_FOUND
+   Eigen::VectorXd normOut_eig() const {
+      return doubleVecToEigen(normOut());
+   }
+
+   void normOut(const Eigen::Ref<const Eigen::VectorXd> norm) {
+      normOut(EigenTodoubleVec(norm));
+   }
+
+   Eigen::VectorXd normIn_eig() const {
+      return doubleVecToEigen(normIn());
+   }
+
+   void normIn(const Eigen::Ref<const Eigen::VectorXd> norm) {
+      normIn(EigenTodoubleVec(norm));
+   }
+
+   Eigen::VectorXd varX_eig() {
+      return doubleVecToEigen(varX());
+   }
+
+   Eigen::VectorXd meanX_eig() {
+      return doubleVecToEigen(meanX());
+   }
+
+   void setInitD(const Eigen::Ref<const Eigen::VectorXd> initD) {
+      setInitD(EigenTodoubleVec(initD));
+   }
+
+   Eigen::VectorXd predict(const Eigen::Ref<const Eigen::VectorXd> x, Eigen::Ref<Eigen::VectorXd> confidence, Eigen::Ref<Eigen::VectorXd> maxW, double cutoff = 0.001) {
+      doubleVec conf_, maxW_, ret;
+	  ret = predict(EigenTodoubleVec(x), conf_, maxW_, cutoff);
+	  confidence = doubleVecToEigen(conf_);
+	  maxW = doubleVecToEigen(maxW_);
+	  return doubleVecToEigen(ret);
+   }
+
+   Eigen::VectorXd predict(const Eigen::Ref<const Eigen::VectorXd> x, Eigen::Ref<Eigen::VectorXd> confidence, double cutoff = 0.001) {
+	   doubleVec conf_, ret;
+	   ret = predict(EigenTodoubleVec(x), conf_, cutoff);
+	   confidence = doubleVecToEigen(conf_);
+	   return doubleVecToEigen(ret);
+   }
+
+   Eigen::VectorXd predict(const Eigen::Ref<const Eigen::VectorXd> x, double cutoff = 0.001) {
+	   return doubleVecToEigen(predict(EigenTodoubleVec(x), cutoff));
+   }
+
+   Eigen::VectorXd update(const Eigen::Ref<const Eigen::VectorXd> x, const Eigen::Ref<const Eigen::VectorXd> y) {
+	   return doubleVecToEigen(update(EigenTodoubleVec(x), EigenTodoubleVec(y)));
+   }
+#endif
    
    /** \brief Underlying C structure */
    LWPR_Model model;

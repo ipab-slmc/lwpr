@@ -9,18 +9,21 @@ set(NUM_THREADS 1 CACHE STRING "Number of execution threads")
 
 set(LWPR_AUTHOR sethu.vijayakumar@ed.ac.uk)
 
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(Threads REQUIRED)
 if (${USE_EXPAT})
   find_package(EXPAT)
   set(HAVE_LIBEXPAT ${EXPAT_FOUND})
 endif()
 
+find_package(Eigen3)
 add_definitions(-DHAVE_CONFIG_H)
 
 include_directories(
   include
   ${CMAKE_CURRENT_BINARY_DIR}
   ${EXPAT_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
 ) 
 
 set(LWPR_VERSION_STRING 1.2.6)
@@ -32,15 +35,17 @@ endif()
 
 CONFIGURE_FILE(include/lwpr_config.h.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/lwpr_config.h)
 
+set(LWPR_SOURCES src/lwpr.c src/lwpr_aux.c src/lwpr_binio.c src/lwpr_math.c src/lwpr_mem.c src/lwpr_xml.c)
+
 if (${BUILD_SHARED_LIBS})
-  add_library(lwpr SHARED src/lwpr.c src/lwpr_aux.c src/lwpr_binio.c src/lwpr_math.c src/lwpr_mem.c src/lwpr_xml.c)
+  add_library(lwpr SHARED ${LWPR_SOURCES})
   target_link_libraries(lwpr ${CMAKE_THREAD_LIBS_INIT} -lm ${EXPAT_LIBRARIES})
   set_target_properties(lwpr PROPERTIES VERSION ${LWPR_VERSION_STRING} SOVERSION ${LWPR_SOVERSION_STRING})
   target_compile_definitions(lwpr PRIVATE LIBRARY_EXPORTS=1)
 endif()
 
 if (${BUILD_STATIC_LIBS})
-  add_library(lwpr_static STATIC src/lwpr.c src/lwpr_aux.c src/lwpr_binio.c src/lwpr_math.c src/lwpr_mem.c src/lwpr_xml.c)
+  add_library(lwpr_static STATIC ${LWPR_SOURCES})
   if(MSVC)
     set_target_properties(lwpr_static PROPERTIES OUTPUT_NAME "lwpr_static")
   else()
@@ -54,4 +59,8 @@ if (${BUILD_EXAMPLES})
   target_link_libraries(example_c lwpr)
   add_executable(example_cpp example_cpp/cross.cc)
   target_link_libraries(example_cpp lwpr)
+  if (${EIGEN3_FOUND})
+    add_executable(example_eigen_cpp example_cpp/cross_eigen.cc)
+    target_link_libraries(example_eigen_cpp lwpr)
+  endif()
 endif()
