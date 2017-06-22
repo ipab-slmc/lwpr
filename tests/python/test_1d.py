@@ -18,6 +18,8 @@ model.init_D = 20 * eye(1)
 model.update_D = True
 model.init_alpha = 40 * eye(1)
 model.meta = False
+model.penalty = 1e-4
+model.diag_only = True
 
 # train the model
 for k in range(20):
