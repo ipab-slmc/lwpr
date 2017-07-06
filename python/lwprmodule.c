@@ -35,13 +35,19 @@ typedef struct {
     double *extra_J;
 } PyLWPR;
 
+#if PY_MAJOR_VERSION >= 3
+#define PyInt_FromLong PyLong_FromLong
+#define PyInt_AsLong PyLong_AsLong
+#endif
+
 static const char *TrueFalse[]={"False","True"};
 static const char *GaussBiSq[]={"Gaussian","BiSquare"};
 
 static void PyLWPR_dealloc(PyLWPR* self) {
    lwpr_free_model(&self->model);
    free(self->extra_in);
-   self->ob_type->tp_free((PyObject*)self);
+   //self->ob_type->tp_free((PyObject*)self);
+   PyObject_GC_UnTrack((PyObject *)self);
 }
 
 static PyObject *get_array_from_vector(int n, const double *data) {
@@ -209,16 +215,17 @@ static PyObject *PyLWPR_G_n_pruned(PyLWPR *self, void *closure) {
 /**  "Getter and Setter" for kernel ***********************************************/
 static PyObject *PyLWPR_G_kernel(PyLWPR *self, void *closure) {
    int num = self->model.kernel == LWPR_BISQUARE_KERNEL ? 1:0;
-   return PyString_FromString(GaussBiSq[num]);
+   return PyUnicode_FromString(GaussBiSq[num]);
 }
 
 static int PyLWPR_S_kernel(PyLWPR *self, PyObject *value, void *closure) {
    const char *str;
-   if (!PyString_Check(value)) {
+   /*if (!PyUnicode_Check(value)) {
       PyErr_SetString(PyExc_TypeError, "Attribute 'kernel' must be a string (either 'Gaussian' or 'BiSquare').");
       return -1;
-   }
-   str = PyString_AsString(value);
+   }*/
+   size_t size;
+   str = PyUnicode_AsUTF8AndSize(value, &size);
    if (!strcasecmp(str,"Gaussian")) {
       self->model.kernel = LWPR_GAUSSIAN_KERNEL;
    } else if (!strcasecmp(str,"BiSquare")) {
@@ -247,7 +254,7 @@ static int PyLWPR_S_kernel(PyLWPR *self, PyObject *value, void *closure) {
 #define CHECK_GET_SCALAR(value, attr, dest) \
    if (PyFloat_Check(value)) {\
       dest = PyFloat_AsDouble(value);\
-   } else if (PyInt_Check(value)) {\
+   } else if (PyLong_Check(value)) {\
       dest = PyInt_AsLong(value);\
    } else {\
       PyErr_SetString(PyExc_TypeError, "Attribute '" attr "' must be a number.");\
@@ -576,7 +583,7 @@ static PyObject *PyLWPR_repr(PyLWPR *obj) {
          m->meta_rate, m->init_lambda, m->final_lambda, m->tau_lambda, 
          m->add_threshold, GaussBiSq[m->kernel==LWPR_BISQUARE_KERNEL?1:0]);
          
-   return PyString_FromString(str);
+   return PyUnicode_FromString(str);
 }
 
 static PyObject *PyLWPR_update(PyLWPR *self, PyObject *args) {
@@ -801,52 +808,34 @@ static PyMethodDef PyLWPR_methods[] = {
     {NULL}  /* Sentinel */
 };
 
-static PyTypeObject PyLWPR_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                           /* ob_size */
-    "lwpr.LWPR",                 /* tp_name */
-    sizeof(PyLWPR)   ,           /* tp_basicsize */
-    0,                           /* tp_itemsize */
+typedef struct {
+    PyObject_HEAD
+    /* Type-specific fields go here. */
+} noddy_NoddyObject;
+
+static PyTypeObject noddy_NoddyType = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    "lwpr.LWPR",             /* tp_name */
+    sizeof(PyLWPR),            /* tp_basicsize */
+    0,                         /* tp_itemsize */
     (destructor) PyLWPR_dealloc, /* tp_dealloc */
-    0,                           /* tp_print */
-    0,                           /* tp_getattr */
-    0,                           /* tp_setattr */
-    0,                           /* tp_compare */
-    (reprfunc) PyLWPR_repr,      /* tp_repr */
-    0,                           /* tp_as_number */
-    0,                           /* tp_as_sequence */
-    0,                           /* tp_as_mapping */
-    0,                           /* tp_hash */
-    0,                           /* tp_call */
-    0,                           /* tp_str */
-    0,                           /* tp_getattro */
-    0,                           /* tp_setattro */
-    0,                           /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,          /* tp_flags */
-    "This class encapsulates an LWPR model for learning regression functions\n"
-    "with a possibly high number of input dimensions. You can create a new\n"
-    "LWPR model by something like\n"
-    "   model = LWPR(12,4)   # 12 inputs, 4 outputs\n"
-    "or you can read a model from an XML file\n"
-    "   model = LWPR('file.xml')\n", /* tp_doc */
-    0,		                     /* tp_traverse */
-    0,		                     /* tp_clear */
-    0,      		               /* tp_richcompare */
-    0,		                     /* tp_weaklistoffset */
-    0,		                     /* tp_iter */
-    0,		                     /* tp_iternext */
-    PyLWPR_methods,              /* tp_methods */
-    0,                           /* tp_members */
-    PyLWPR_getseters,            /* tp_getset */
-    0,                           /* tp_base */
-    0,                           /* tp_dict */
-    0,                           /* tp_descr_get */
-    0,                           /* tp_descr_set */
-    0,                           /* tp_dictoffset */
-    0,                           /* tp_init */
-    0,                           /* tp_alloc */
-    PyLWPR_new                   /* tp_new */
-};  
+    0,                         /* tp_print */
+    0,                         /* tp_getattr */
+    0,                         /* tp_setattr */
+    0,                         /* tp_reserved */
+    (reprfunc) PyLWPR_repr,    /* tp_repr */
+    0,                         /* tp_as_number */
+    0,                         /* tp_as_sequence */
+    0,                         /* tp_as_mapping */
+    0,                         /* tp_hash  */
+    0,                         /* tp_call */
+    0,                         /* tp_str */
+    0,                         /* tp_getattro */
+    0,                         /* tp_setattro */
+    0,                         /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,        /* tp_flags */
+    "lwpr.LWPR doc",           /* tp_doc */
+};
 
 static PyMethodDef lwpr_methods[] = {{NULL}};
 
@@ -854,14 +843,42 @@ static PyMethodDef lwpr_methods[] = {{NULL}};
 #define PyMODINIT_FUNC void
 #endif
 
-PyMODINIT_FUNC initlwpr(void) {
-   PyObject* m;
+static struct PyModuleDef moduledef = {
+       PyModuleDef_HEAD_INIT,
+       "lwpr",
+       "Python wrapper for the C implementation of LWPR.",
+       -1,
+       lwpr_methods,
+       NULL,
+       NULL,
+       NULL,
+       NULL
+};
 
-   if (PyType_Ready(&PyLWPR_Type) < 0) return;
+/* ==== Initialize the C_test functions ====================== */
+PyObject* PyInit_lwpr(void){
+    noddy_NoddyType.tp_new = PyLWPR_new;
+    noddy_NoddyType.tp_getset = PyLWPR_getseters;
+    noddy_NoddyType.tp_methods = PyLWPR_methods;
 
-   m = Py_InitModule3("lwpr", lwpr_methods, "Python wrapper for the C implementation of LWPR.");
+    if (PyType_Ready(&noddy_NoddyType) < 0)
+        return NULL;
 
-   Py_INCREF(&PyLWPR_Type);
-   PyModule_AddObject(m, "LWPR", (PyObject *)&PyLWPR_Type);
-   import_array();
+    // create module
+    PyObject *module = PyModule_Create(&moduledef);
+
+    // handle probable error
+    if (module == NULL)
+        return NULL;
+
+    PyModule_AddStringConstant(module, "__author__", "Sethu Vijayakumar <asethu.vijayakumar@ed.ac.uk>");
+    PyModule_AddStringConstant(module, "__version__", "1.2.6");
+
+    Py_INCREF(&noddy_NoddyType);
+    PyModule_AddObject(module, "LWPR", (PyObject *)&noddy_NoddyType);
+
+    import_array();  // Must be present for NumPy.  Called first after above line.
+
+    // return newly created module
+    return module;
 }
