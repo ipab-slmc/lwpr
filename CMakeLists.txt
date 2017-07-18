@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.3.0)
+cmake_minimum_required(VERSION 2.8.11)
 project(lwpr)
 
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
@@ -27,8 +27,10 @@ include_directories(
   include
   ${CMAKE_CURRENT_BINARY_DIR}
   ${EXPAT_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIR}
-) 
+)
+if (${EIGEN3_FOUND})
+  include_directories(${EIGEN3_INCLUDE_DIR})
+endif()
 
 set(LWPR_VERSION_STRING 1.2.6)
 set(LWPR_SOVERSION_STRING 1)
