@@ -412,7 +412,7 @@ LWPR_Model *get_pointer_from_array(const mxArray *A) {
 }
 
 mxArray *create_array_from_pointer(LWPR_Model *model) {
-   static int dims[2]={1,1};
+   static mwSize dims[2]={1,1};
    LWPR_Model **address;
    mxArray *A;
    
